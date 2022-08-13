@@ -1,6 +1,6 @@
 <template>
   <!-- mydiv for id is used for styling and the other one inside ref is used for the functionality -->
-  <div id="mydiv" ref="mydiv">
+  <div id="mydiv" ref="myDiv">
     <div class="container">
       <div class="row">
         <div class="tree">
@@ -72,8 +72,8 @@
   </div>
 </template>
 
-<script>
-import { ref } from "vue";
+<script setup>
+import { onMounted, ref } from "vue";
 
 let pos1 = 0,
   pos2 = 0,
@@ -87,93 +87,93 @@ let scale = 1,
   start = { x: 0, y: 0 };
 
 const elmnt = ref(null);
+const myDiv = ref(null);
 
-export default {
-  methods: {
-    elementDrag(e = window.event) {
-      e.preventDefault();
-      // calculate the new cursor position:
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      // set the element's new position:
-      elmnt.value.style.top = elmnt.value.offsetTop - pos2 + "px";
-      elmnt.value.style.left = elmnt.value.offsetLeft - pos1 + "px";
-    },
-
-    closeDragElement() {
-      /* stop moving when mouse button is released:*/
-      document.onmouseup = null;
-      document.onmousemove = null;
-    },
-
-    dragElement() {
-      // inside the real implementation we should also use refs instead of accessing the document directly
-      if (document.getElementById(elmnt.value.id + "header")) {
-        /* if present, the header is where you move the DIV from:*/
-        document.getElementById(elmnt.value.id + "header").onmousedown =
-          this.dragMouseDown;
-      } else {
-        /* otherwise, move the DIV from anywhere inside the DIV:*/
-        elmnt.value.onmousedown = this.dragMouseDown;
-      }
-    },
-
-    dragMouseDown(e = window.event) {
-      e.preventDefault();
-      // get the mouse cursor position at startup:
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      document.onmouseup = this.closeDragElement;
-      // call a function whenever the cursor moves:
-      document.onmousemove = this.elementDrag;
-    },
-    setTransform() {
-      elmnt.value.style.transform =
-        "translate(" + pointX + "px, " + pointY + "px) scale(" + scale + ")";
-    },
-
-    zoom() {
-      (elmnt.value.onmousedown = (e) => {
-        e.preventDefault();
-        start = { x: e.clientX - pointX, y: e.clientY - pointY };
-        panning = true;
-      }),
-        (elmnt.value.onmouseup = (e) => {
-          panning = false;
-        }),
-        (elmnt.value.onmousemove = (e) => {
-          e.preventDefault();
-          if (!panning) {
-            return;
-          }
-          pointX = e.clientX - start.x;
-          pointY = e.clientY - start.y;
-          this.setTransform();
-        }),
-        (elmnt.value.onwheel = (e) => {
-          e.preventDefault();
-
-          let xs = (e.clientX - pointX) / scale,
-            ys = (e.clientY - pointY) / scale,
-            delta = e.wheelDelta ? e.wheelDelta : -e.deltaY;
-
-          delta > 0 ? (scale *= 1.1) : (scale /= 1.1);
-          pointX = e.clientX - xs * scale;
-          pointY = e.clientY - ys * scale;
-
-          this.setTransform();
-        });
-    },
-  },
-
-  mounted() {
-    elmnt.value = this.$refs.mydiv;
-    this.dragElement();
-    this.zoom();
-  },
+// export default {
+//   methods: {
+const elementDrag = (e = window.event) => {
+  e.preventDefault();
+  // calculate the new cursor position:
+  pos1 = pos3 - e.clientX;
+  pos2 = pos4 - e.clientY;
+  pos3 = e.clientX;
+  pos4 = e.clientY;
+  // set the element's new position:
+  elmnt.value.style.top = elmnt.value.offsetTop - pos2 + "px";
+  elmnt.value.style.left = elmnt.value.offsetLeft - pos1 + "px";
 };
+
+const closeDragElement = () => {
+  /* stop moving when mouse button is released:*/
+  document.onmouseup = null;
+  document.onmousemove = null;
+};
+
+const dragElement = () => {
+  // inside the real implementation we should also use refs instead of accessing the document directly
+  if (document.getElementById(elmnt.value.id + "header")) {
+    /* if present, the header is where you move the DIV from:*/
+    document.getElementById(elmnt.value.id + "header").onmousedown =
+      dragMouseDown;
+  } else {
+    /* otherwise, move the DIV from anywhere inside the DIV:*/
+    elmnt.value.onmousedown = dragMouseDown;
+  }
+};
+
+const dragMouseDown = (e = window.event) => {
+  e.preventDefault();
+  // get the mouse cursor position at startup:
+  pos3 = e.clientX;
+  pos4 = e.clientY;
+  document.onmouseup = closeDragElement;
+  // call a function whenever the cursor moves:
+  document.onmousemove = elementDrag;
+};
+
+const setTransform = () => {
+  elmnt.value.style.transform =
+    "translate(" + pointX + "px, " + pointY + "px) scale(" + scale + ")";
+};
+
+const zoom = () => {
+  (elmnt.value.onmousedown = (e) => {
+    e.preventDefault();
+    start = { x: e.clientX - pointX, y: e.clientY - pointY };
+    panning = true;
+  }),
+    (elmnt.value.onmouseup = (e) => {
+      panning = false;
+    }),
+    (elmnt.value.onmousemove = (e) => {
+      e.preventDefault();
+      if (!panning) {
+        return;
+      }
+      pointX = e.clientX - start.x;
+      pointY = e.clientY - start.y;
+      setTransform();
+    }),
+    (elmnt.value.onwheel = (e) => {
+      e.preventDefault();
+
+      let xs = (e.clientX - pointX) / scale,
+        ys = (e.clientY - pointY) / scale,
+        delta = e.wheelDelta ? e.wheelDelta : -e.deltaY;
+
+      delta > 0 ? (scale *= 1.1) : (scale /= 1.1);
+      pointX = e.clientX - xs * scale;
+      pointY = e.clientY - ys * scale;
+
+      setTransform();
+    });
+};
+
+onMounted(() => {
+  elmnt.value = myDiv.value;
+  dragElement();
+  zoom();
+});
 </script>
 
 <style>
